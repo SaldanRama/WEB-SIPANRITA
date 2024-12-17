@@ -11,14 +11,14 @@
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  background-image: url('https://sippn.menpan.go.id/images/article/large/fakultas-mipa-750x375-1-20240905105353.jpeg');
+  background-image: url("public/sb2.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .login-left::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -27,7 +27,8 @@
   background-color: rgba(0, 0, 0, 0.444);
 }
 
-.login-left h1, .login-left p {
+.login-left h1,
+.login-left p {
   position: relative;
   z-index: 2;
   color: rgb(255, 255, 255);
@@ -77,7 +78,7 @@
 .login-button {
   width: 100%;
   padding: 0.8rem;
-  background-color: #8C1A11;
+  background-color: #8c1a11;
   color: white;
   border: none;
   border-radius: 4px;
@@ -95,7 +96,7 @@
 }
 
 .forgot-password a {
-  color: #8C1A11;
+  color: #8c1a11;
   text-decoration: none;
 }
 

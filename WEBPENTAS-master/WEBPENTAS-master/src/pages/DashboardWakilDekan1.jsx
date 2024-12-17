@@ -4,36 +4,36 @@ import { FaInbox, FaCheckCircle, FaTimesCircle, FaSignOutAlt } from "react-icons
 import '../disc/css/main.css'; 
 import axios from "axios";
 
-export function DashboardWakilDekan() {
+export function DashboardWakilDekan1() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
     <div className="dashboard-container">
       <div className={`dashboard-sidebar ${!isSidebarOpen ? 'closed' : ''}`}>
         <div className="sidebar-header">
-          <h2>Dashboard WD 2</h2>
+          <h2>Dashboard WD 1</h2>
         </div>
         
         <nav className="sidebar-nav">
-          <NavLink to="/dashboard-wadek" end className={({isActive}) => 
+          <NavLink to="/dashboard-wadek1" end className={({isActive}) => 
             `nav-item ${isActive ? 'active' : ''}`
           }>
             <i className="fas fa-home"></i>
             Beranda
           </NavLink>
           
-          <NavLink to="/dashboard-wadek/disposisi" className={({isActive}) => 
+          <NavLink to="/dashboard-wadek1/disposisi-kegiatan" className={({isActive}) => 
             `nav-item ${isActive ? 'active' : ''}`
           }>
             <i className="fas fa-inbox"></i>
-            Daftar Peminjaman Fasilitas
+            Daftar Perizinan
           </NavLink>
           
-          <NavLink to="/dashboard-wadek/riwayat" className={({isActive}) => 
+          <NavLink to="/dashboard-wadek1/riwayat" className={({isActive}) => 
             `nav-item ${isActive ? 'active' : ''}`
           }>
             <i className="fas fa-history"></i>
-            Riwayat Peminjaman
+            Riwayat Perizinan
           </NavLink>
 
           <button 
@@ -71,9 +71,9 @@ export function DashboardWakilDekan() {
 
         <Routes>
           <Route index element={<BerandaWadek />} />
-          <Route path="disposisi" element={<DaftarDisposisi />} />
-          <Route path="disposisi/:id" element={<DetailDisposisi />} />
-          <Route path="riwayat" element={<RiwayatPeminjaman />} />
+          <Route path="disposisi-kegiatan" element={<DaftarDisposisi />} />
+          <Route path="disposisi-kegiatan/:id" element={<DetailDisposisi />} />
+          <Route path="riwayat" element={<RiwayatAktivitas />} />
         </Routes>
       </main>
     </div>
@@ -82,9 +82,7 @@ export function DashboardWakilDekan() {
 
 function BerandaWadek() {
   const [stats, setStats] = useState({
-    pending: 0,
-    disetujui: 0,
-    ditolak: 0
+    pending: 0, // Default 0 untuk status 'pending'
   });
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,18 +95,17 @@ function BerandaWadek() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/peminjaman/wadek');
+      const response = await fetch('http://localhost:5000/perizinan/wadek1');
       const data = await response.json();
-      
+
+      // Menghitung jumlah status_disposisi 'pending'
       const counts = data.reduce((acc, curr) => {
-        acc[curr.status] = (acc[curr.status] || 0) + 1;
+        acc[curr.status_disposisi] = (acc[curr.status_disposisi] || 0) + 1;
         return acc;
       }, {});
 
       setStats({
-        pending: counts.pending || 0,
-        disetujui: counts.disetujui || 0,
-        ditolak: counts.ditolak || 0
+        pending: counts['pending'] || 0, // Ambil jumlah 'pending', default 0
       });
     } catch (error) {
       console.error('Error:', error);
@@ -119,10 +116,9 @@ function BerandaWadek() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('http://localhost:5000/peminjaman/wadek/notifications');
+      const response = await fetch('http://localhost:5000/perizinan/wadek1/notifications');
       const data = await response.json();
-
-      setNotifications(data.slice(0, 5));
+      setNotifications(data.slice(0, 5)); // Ambil 5 notifikasi terbaru
     } catch (error) {
       console.error('Error:', error);
     }
@@ -135,7 +131,8 @@ function BerandaWadek() {
   return (
     <div className="dashboard-content">
       <h1 className="dashboard-title">Dashboard Overview</h1>
-      
+
+      {/* Statistik Disposisi */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon pending">
@@ -146,28 +143,9 @@ function BerandaWadek() {
             <div className="value">{stats.pending}</div>
           </div>
         </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon approved">
-            <FaCheckCircle />
-          </div>
-          <div className="stat-info">
-            <h3>Disposisi Disetujui</h3>
-            <div className="value">{stats.disetujui}</div>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon rejected">
-            <FaTimesCircle />
-          </div>
-          <div className="stat-info">
-            <h3>Disposisi Ditolak</h3>
-            <div className="value">{stats.ditolak}</div>
-          </div>
-        </div>
       </div>
 
+      {/* Notifikasi Terbaru */}
       <div className="dashboard-grid">
         <div className="dashboard-card">
           <div className="card-header">
@@ -175,20 +153,25 @@ function BerandaWadek() {
           </div>
           <div className="notification-list">
             {notifications.map((notif) => (
-              <div key={notif.id} className="peminjaman-item">
-                <div className="peminjaman-info">
+              <div key={notif.id} className="perizinan-item">
+                <div className="perizinan-info">
+                  <hr />
                   <h4>{notif.nama_organisasi}</h4>
-                  <p>{new Date(new Date(notif.created_at).getTime() + (8 * 60 * 60 * 1000)).toLocaleString('id-ID', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                  })}</p>
-                  <span className={`status-badge ${notif.status}`}>
-                    {notif.status}
+                  <h5>{notif.keperluan}</h5>
+                  <p>
+                    {new Date(
+                      new Date(notif.tanggal_permintaan).getTime() + 8 * 60 * 60 * 1000
+                    ).toLocaleString('id-ID', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                  <span
+                    className={`status-badge ${notif.status_disposisi}`}
+                  >
+                    {notif.status_disposisi}
                   </span>
                 </div>
               </div>
@@ -200,32 +183,35 @@ function BerandaWadek() {
   );
 }
 
+
 function DaftarDisposisi() {
-  const [disposisi, setDisposisi] = useState([]);
+  const [perizinan, setPerizinan] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDisposisi();
+    fetchPerizinan();
   }, []);
 
-  const fetchDisposisi = async () => {
+  const fetchPerizinan = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/peminjaman/wadek');
+      const response = await fetch('http://localhost:5000/perizinan/wadek1');
       const data = await response.json();
 
       if (Array.isArray(data)) {
-        const sortedDisposisi = data
-          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-          .reverse();
-        setDisposisi(sortedDisposisi);
+        // Filter data untuk status 'disposisi'
+        const filteredPerizinan = data
+          .filter((item) => item.status_disposisi === 'pending')
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Urutkan dari terbaru
+
+        setPerizinan(filteredPerizinan);
       } else if (data.error) {
         console.error('Error:', data.error);
       }
     } catch (error) {
       console.error('Error:', error);
-      setDisposisi([]);
+      setPerizinan([]);
     } finally {
       setLoading(false);
     }
@@ -235,15 +221,9 @@ function DaftarDisposisi() {
     return <div className="loading">Memuat data...</div>;
   }
 
-  // Filter data disposisi untuk menyembunyikan data yang sudah melewati tanggal peminjaman
-  const filteredDisposisi = disposisi.filter((item) => {
-    const endDateTime = new Date(`${item.tanggal_selesai}T${item.waktu_selesai}`);
-    return endDateTime >= new Date(); // Menampilkan hanya yang masih aktif
-  });
-
   return (
     <div className="dashboard-content">
-      <h1 className="dashboard-title">Daftar Peminjaman Didisposisi</h1>
+      <h1 className="dashboard-title">Daftar Perizinan (Status Disposisi)</h1>
 
       <div className="table-container">
         <table className="data-table">
@@ -251,28 +231,25 @@ function DaftarDisposisi() {
             <tr>
               <th>Nama Organisasi</th>
               <th>Penanggung Jawab</th>
-              <th>Fasilitas</th>
-              <th>Tanggal & Waktu</th>
+              <th>Keperluan</th>
+              <th>Tanggal Permintaan</th>
               <th>Status</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {filteredDisposisi.length > 0 ? (
-              filteredDisposisi.map((item) => (
+            {perizinan.length > 0 ? (
+              perizinan.map((item) => (
                 <tr key={item.id}>
                   <td>{item.nama_organisasi}</td>
                   <td>{item.penanggung_jawab}</td>
-                  <td>{item.nama_fasilitas}</td>
+                  <td>{item.keperluan}</td>
                   <td>
-                    {new Date(new Date(item.created_at).getTime() + (8 * 60 * 60 * 1000)).toLocaleString('id-ID', {
+                    {new Date(item.created_at).toLocaleString('id-ID', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false,
                     })}
                   </td>
                   <td>
@@ -284,7 +261,7 @@ function DaftarDisposisi() {
                     <div className="action-buttons">
                       <button
                         className="btn-detail"
-                        onClick={() => navigate(`/dashboard-wadek/disposisi/${item.id}`)}
+                        onClick={() => navigate(`/dashboard-wadek1/disposisi-kegiatan/${item.id}`)}
                       >
                         <i className="fas fa-eye"></i>
                         Detail
@@ -295,7 +272,7 @@ function DaftarDisposisi() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center">Tidak ada peminjaman yang aktif</td>
+                <td colSpan="6" className="text-center">Tidak ada surat izin yang di Disposisi</td>
               </tr>
             )}
           </tbody>
@@ -312,16 +289,18 @@ function DetailDisposisi() {
   const [disposisi, setDisposisi] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rejectComment, setRejectComment] = useState('');
-  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
+  // Fetch data disposisi pada mount pertama dan saat 'id' berubah
   useEffect(() => {
     fetchDetailDisposisi();
   }, [id]);
 
+  // Fungsi untuk memuat detail disposisi
   const fetchDetailDisposisi = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/disposisi/${id}`);
+      const response = await fetch(`http://localhost:5000/disposisi-kegiatan/${id}`);
       const data = await response.json();
       setDisposisi(data);
     } catch (error) {
@@ -331,36 +310,30 @@ function DetailDisposisi() {
     }
   };
 
+  // Fungsi untuk memperbarui status disposisi (Setujui/Tolak)
   const handleStatusUpdate = async (status, comment = null) => {
     try {
-      const body = {
-        status_disposisi: status,
-      };
-
+      const body = { status_disposisi: status };
       if (status === 'ditolak' && comment) {
-        body.catatan = comment;
+        body.komentar = comment;
       }
 
-      const disposisiResponse = await fetch(`http://localhost:5000/disposisi/${id}/status`, {
+      const disposisiResponse = await fetch(`http://localhost:5000/disposisi-kegiatan/${id}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       if (disposisiResponse.ok) {
-        const peminjamanResponse = await fetch(`http://localhost:5000/peminjaman/${disposisi.id_peminjaman}/status`, {
+        const perizinanResponse = await fetch(`http://localhost:5000/izin-kegiatan/${disposisi.id_izin_kegiatan}/status`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status }),
         });
 
-        if (peminjamanResponse.ok) {
+        if (perizinanResponse.ok) {
+          setToastMessage('Status berhasil diperbarui');
           await fetchDetailDisposisi();
-          navigate('/dashboard-wadek/disposisi');
         }
       }
     } catch (error) {
@@ -368,6 +341,7 @@ function DetailDisposisi() {
     }
   };
 
+  // Fungsi untuk menangani penolakan disposisi
   const handleReject = async () => {
     if (rejectComment.trim() === '') {
       alert('Alasan penolakan harus diisi.');
@@ -375,20 +349,31 @@ function DetailDisposisi() {
     }
   
     try {
-      const response = await fetch(`http://localhost:5000/disposisi/${id}/status`, {
+      const response = await fetch(`http://localhost:5000/disposisi-kegiatan/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           status_disposisi: 'ditolak',
-          catatan: rejectComment, // Kirim catatan penolakan
+          komentar: rejectComment,
         }),
       });
   
       if (response.ok) {
-        await fetchDetailDisposisi(); // Refresh data
-        setRejectComment('');
+        setToastMessage('Perizinan berhasil ditolak');
+  
+        // Tutup modal Bootstrap secara manual
+        const modalElement = document.getElementById('rejectModal');
+        const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+  
+        // Tunggu sedikit untuk memastikan modal tertutup
+        setTimeout(() => {
+          window.location.reload(); // Refresh halaman
+        }, 300); // Timeout kecil untuk memastikan transisi modal selesai
       } else {
         console.error('Error rejecting:', response.statusText);
       }
@@ -396,70 +381,58 @@ function DetailDisposisi() {
       console.error('Error:', error);
     }
   };
+  
+  
+
+  // Auto-hide toast setelah 5 detik
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null); // Menghilangkan toast setelah 5 detik
+      }, 5000);
+
+      return () => clearTimeout(timer); // Bersihkan timer saat component di-unmount atau toastMessage berubah
+    }
+  }, [toastMessage]);
 
   if (loading) return <div className="loading">Memuat data...</div>;
   if (!disposisi) return <div>Data tidak ditemukan</div>;
 
   return (
     <div className="detail-container">
-      <h2>Detail Peminjaman</h2>
+      <h2>Detail Perizinan</h2>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 1050 }}>
+          <div className="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div className="toast-header">
+              <strong className="me-auto">Notifikasi</strong>
+              <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div className="toast-body">{toastMessage}</div>
+          </div>
+        </div>
+      )}
 
       <div className="detail-section">
         <h3>Informasi Pemohon</h3>
         <table>
           <tbody>
-            <tr>
-              <td>Nama Organisasi</td>
-              <td>: {disposisi.nama_organisasi}</td>
-            </tr>
-            <tr>
-              <td>Penanggung Jawab</td>
-              <td>: {disposisi.penanggung_jawab}</td>
-            </tr>
-            <tr>
-              <td>Kontak</td>
-              <td>: {disposisi.kontak_pj}</td>
-            </tr>
-            <tr>
-              <td>Email</td>
-              <td>: {disposisi.email}</td>
-            </tr>
-            <tr>
-              <td>Fasilitas</td>
-              <td>: {disposisi.nama_fasilitas}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className="detail-section">
-        <h3>Informasi Peminjaman</h3>
-        <table>
-          <tbody>
-            <tr>
-              <td>Tanggal Mulai</td>
-              <td>: {disposisi.tanggal_mulai}</td>
-            </tr>
-            <tr>
-              <td>Tanggal Selesai</td>
-              <td>: {disposisi.tanggal_selesai}</td>
-            </tr>
-            <tr>
-              <td>Waktu</td>
-              <td>: {disposisi.waktu_mulai} - {disposisi.waktu_selesai}</td>
-            </tr>
-            <tr>
-              <td>Keperluan</td>
-              <td>: {disposisi.keperluan}</td>
-            </tr>
+            <tr><td>Nama Organisasi</td><td>: {disposisi.nama_organisasi}</td></tr>
+            <tr><td>Penanggung Jawab</td><td>: {disposisi.penanggung_jawab}</td></tr>
+            <tr><td>Kontak</td><td>: {disposisi.kontak_pj}</td></tr>
+            <tr><td>Email</td><td>: {disposisi.email}</td></tr>
+            <tr><td>Keperluan</td><td>: {disposisi.keperluan}</td></tr>
             <tr>
               <td>Status</td>
-              <td>: <span className={`status-badge ${disposisi.status_disposisi}`}>{disposisi.status_disposisi}</span></td>
+              <td>: <span className={`status-badge ${disposisi.status_disposisi}`}>{disposisi.status_disposisi}</span>
+              </td>
             </tr>
             {disposisi.status_disposisi === 'ditolak' && (
               <tr>
-                <td>Catatan</td>
-                <td>: {disposisi.catatan}</td>
+                <td>Komentar</td>
+                <td>: {disposisi.komentar}</td>
               </tr>
             )}
           </tbody>
@@ -468,35 +441,34 @@ function DetailDisposisi() {
 
       <div className="detail-section">
         <h3>Dokumen</h3>
-        {disposisi.surat_peminjaman ? (
+        {disposisi.surat_perizinan ? (
           <div className="document-preview">
-            <p>Nama File: {disposisi.surat_peminjaman}</p>
+            <p>Nama File: {disposisi.surat_perizinan}</p>
             <div className="document-actions">
-              <a 
-                href={`http://localhost:5000/uploads/${disposisi.surat_peminjaman}`} 
-                target="_blank" 
+              <a
+                href={`http://localhost:5000/uploads/${disposisi.surat_perizinan}`}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary"
               >
                 <i className="fas fa-download"></i> Unduh Surat
               </a>
-              {disposisi.surat_peminjaman.toLowerCase().endsWith('.pdf') ? (
+              {disposisi.surat_perizinan.toLowerCase().endsWith('.pdf') ? (
                 <iframe
-                  src={`http://localhost:5000/uploads/${disposisi.surat_peminjaman}#toolbar=0`}
+                  src={`http://localhost:5000/uploads/${disposisi.surat_perizinan}#toolbar=0`}
                   type="application/pdf"
                   width="100%"
                   height="500px"
                   style={{ marginTop: '10px', border: '1px solid #ddd' }}
                 />
               ) : (
-                <img 
-                  src={`http://localhost:5000/uploads/${disposisi.surat_peminjaman}`}
+                <img
+                  src={`http://localhost:5000/uploads/${disposisi.surat_perizinan}`}
                   alt="Preview Surat"
                   style={{ maxWidth: '100%', marginTop: '10px' }}
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/placeholder-image.png';
-                    console.log('Error loading image:', disposisi.surat_peminjaman);
                   }}
                 />
               )}
@@ -510,12 +482,8 @@ function DetailDisposisi() {
       <div className="action-buttons">
         {disposisi.status_disposisi === 'pending' && (
           <>
-            <button
-              className="btn-approve"
-              onClick={() => handleStatusUpdate('disetujui')}
-            >
-              <i className="fas fa-check"></i>
-              Setujui
+            <button className="btn-approve" onClick={() => handleStatusUpdate('disetujui')}>
+              <i className="fas fa-check"></i> Setujui
             </button>
             <button
               className="btn btn-danger"
@@ -526,15 +494,12 @@ function DetailDisposisi() {
             </button>
           </>
         )}
-        <button
-          className="btn-back"
-          onClick={() => navigate('/dashboard-wadek/disposisi')}
-        >
-          <i className="fas fa-arrow-left"></i>
-          Kembali
+        <button className="btn-back" onClick={() => navigate('/dashboard-wadek1/disposisi-kegiatan')}>
+          <i className="fas fa-arrow-left"></i> Kembali
         </button>
       </div>
 
+      {/* Modal Tolak */}
       <div
         className="modal fade"
         id="rejectModal"
@@ -556,7 +521,6 @@ function DetailDisposisi() {
             <div className="modal-body">
               <textarea
                 className="form-control"
-                rows="4"
                 placeholder="Masukkan alasan penolakan..."
                 value={rejectComment}
                 onChange={(e) => setRejectComment(e.target.value)}
@@ -567,18 +531,14 @@ function DetailDisposisi() {
                 type="button"
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
-                onClick={() => setRejectComment('')}
+                onClick={() => setRejectComment("")}
               >
                 Batal
               </button>
               <button
                 type="button"
                 className="btn btn-danger"
-                onClick={() => {
-                  handleReject();
-                  const modal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
-                  modal.hide();
-                }}
+                onClick={handleReject}
               >
                 Tolak
               </button>
@@ -591,70 +551,121 @@ function DetailDisposisi() {
   );
 }
 
-function RiwayatPeminjaman() {
-  const [riwayat, setRiwayat] = useState([]);
+function RiwayatAktivitas() {
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const limit = 30; // Jumlah data per halaman
 
   useEffect(() => {
-    const fetchRiwayat = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/peminjaman");
-        const filteredRiwayat = response.data.filter(
-          (item) => item.status === "selesai" // Filter hanya peminjaman yang selesai
-        );
-        setRiwayat(filteredRiwayat);
-      } catch (err) {
-        setError("Gagal mengambil data riwayat aktivitas");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchHistory(currentPage);
+  }, [currentPage]);
 
-    fetchRiwayat();
-  }, []);
+  const fetchHistory = async (page) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `http://localhost:5000/disposisi-kegiatan/history/wadek1?page=${page}&limit=${limit}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Gagal memuat data riwayat.');
+      }
+
+      const data = await response.json();
+      setHistory(data.data);
+      setTotalPages(data.pages);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  if (loading) return <div className="text-center mt-3">Memuat riwayat...</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
-    <div className="container py-5">
-      <h1 className="mb-4">Riwayat Peminjaman</h1>
+    <div className="container m-4">
+      <h2 className="mb-4 fw-semibold">Riwayat Aktivitas</h2>
 
-      {loading ? (
-        <p>Memuat data riwayat...</p>
-      ) : error ? (
-        <p className="text-danger">{error}</p>
-      ) : riwayat.length === 0 ? (
-        <p>Tidak ada aktivitas yang telah selesai.</p>
+      {history.length === 0 ? (
+        <div className="alert alert-warning text-center">Tidak ada riwayat aktivitas.</div>
       ) : (
-        <div className="table-container">
+        <div className="table-container mb-4">
           <table className="data-table">
-            <thead className="table-light">
+            <thead className="table-dark">
               <tr>
+                <th>No</th>
                 <th>Nama Organisasi</th>
-                <th>Penanggung Jawab</th>
-                <th>Nama Fasilitas</th>
-                <th>Tanggal Mulai</th>
-                <th>Tanggal Selesai</th>
-                <th>Waktu Mulai</th>
-                <th>Waktu Selesai</th>
+                <th>Keperluan</th>
+                <th>Status</th>
+                <th>Komentar</th>
+                <th>Tanggal Permintaan</th>
               </tr>
             </thead>
             <tbody>
-              {riwayat.map((item, index) => (
+              {history.map((item, index) => (
                 <tr key={item.id}>
+                  <td>{(currentPage - 1) * limit + index + 1}</td>
                   <td>{item.nama_organisasi}</td>
-                  <td>{item.penanggung_jawab}</td>
-                  <td>{item.nama_fasilitas}</td>
-                  <td>{item.tanggal_mulai}</td>
-                  <td>{item.tanggal_selesai}</td>
-                  <td>{item.waktu_mulai}</td>
-                  <td>{item.waktu_selesai}</td>
+                  <td>{item.keperluan}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        item.status_disposisi === 'disetujui'
+                          ? 'bg-success'
+                          : 'bg-danger'
+                      }`}
+                    >
+                      {item.status_disposisi}
+                    </span>
+                  </td>
+                  <td>{item.komentar || '-'}</td>
+                  <td>{item.tanggal_permintaan}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {/* Bootstrap Pagination */}
+      <nav>
+        <ul className="pagination justify-content-center">
+          {/* Tombol Previous */}
+          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+              Previous
+            </button>
+          </li>
+
+          {/* Nomor Halaman */}
+          {Array.from({ length: totalPages }, (_, i) => (
+            <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+              <button className="page-link" onClick={() => handlePageChange(i + 1)}>
+                {i + 1}
+              </button>
+            </li>
+          ))}
+
+          {/* Tombol Next */}
+          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+              Next
+            </button>
+          </li>
+        </ul>
+      </nav>
     </div>
   );
 }

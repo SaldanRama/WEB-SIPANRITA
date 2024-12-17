@@ -87,6 +87,14 @@ export const NavbarComponents = () => {
                 </li>
                 <li className="nav-item">
                 <Link 
+                  to="/izin-kegiatan" 
+                  className={`nav-link ${location.pathname === "/izin-kegiatan" ? "active" : ""}`}
+                >
+                  Izin Kegiatan
+                </Link>
+                </li>
+                <li className="nav-item">
+                <Link 
                   to="/fasilitas" 
                   className={`nav-link ${location.pathname === "/fasilitas" ? "active" : ""}`}
                 >

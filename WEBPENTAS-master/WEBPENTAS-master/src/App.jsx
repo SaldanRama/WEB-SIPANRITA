@@ -10,8 +10,10 @@ import { DashboardDekan } from './pages/DashboardDekan';
 import { DashboardWakilDekan } from './pages/DashboardWakilDekan';
 import { FooterComponents } from './components/FooterComponents'
 import { FasilitasPage } from './pages/FasilitasPage';
+import { IzinKegiatan } from './pages/IzinKegiatan';
 import { ContactPage } from './pages/ContactPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { DashboardWakilDekan1 } from './pages/DashboardWakilDekan1';
 
 function App() {
   const location = useLocation();
@@ -25,6 +27,7 @@ function App() {
 
       <Routes>
         {/* Rute Publik */}
+        <Route path="/izin-kegiatan" element={<IzinKegiatan />} />
         <Route path="/fasilitas" element={<FasilitasPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/detail-fasilitas/:id" element={<DetailFasilitas />} />
@@ -55,6 +58,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['wakil_dekan']}>
               <DashboardWakilDekan />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard-wadek1/*"
+          element={
+            <ProtectedRoute allowedRoles={['wakil_dekan1']}>
+              <DashboardWakilDekan1 />
             </ProtectedRoute>
           }
         />

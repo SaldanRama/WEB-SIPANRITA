@@ -11,6 +11,7 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
       admin: '/dashboard',
       dekan: '/dashboard-dekan',
       wakil_dekan: '/dashboard-wadek',
+      wakil_dekan1: '/dashboard-wadek1',
     };
   
     // Cek apakah pengguna belum login

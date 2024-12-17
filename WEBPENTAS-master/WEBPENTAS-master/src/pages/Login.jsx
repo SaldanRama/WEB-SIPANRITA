@@ -56,6 +56,9 @@ export const Login = () => {
         case 'wakil_dekan':
           navigate('/dashboard-wadek');
           break;
+        case 'wakil_dekan1':
+          navigate('/dashboard-wadek1');
+          break;
         default:
           navigate('/');
       }       

@@ -32,6 +32,8 @@ def create_app():
         from app.models.fasilitas import Fasilitas
         from app.models.peminjaman import Peminjaman
         from app.models.disposisi import Disposisi
+        from app.models.izin_kegiatan import IzinKegiatan
+        from app.models.disposisi_kegiatan import DisposisiKegiatan
         
         # Import blueprints
         from app.routes.auth import auth_bp
@@ -39,6 +41,8 @@ def create_app():
         from app.routes.peminjaman import peminjaman_bp
         from app.routes.disposisi import disposisi_bp
         from app.routes.contact import contact_bp  # Import Blueprint contact
+        from app.routes.izin_kegiatan import izin_kegiatan_bp  # Import Blueprint contact
+        from app.routes.disposisi_kegiatan import disposisi_kegiatan_bp  # Import Blueprint contact
         
         # Register blueprints
         app.register_blueprint(auth_bp)
@@ -46,6 +50,8 @@ def create_app():
         app.register_blueprint(peminjaman_bp)
         app.register_blueprint(disposisi_bp)
         app.register_blueprint(contact_bp)
+        app.register_blueprint(izin_kegiatan_bp)
+        app.register_blueprint(disposisi_kegiatan_bp)
         
         # Create tables
         db.create_all()

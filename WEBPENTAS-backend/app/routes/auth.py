@@ -111,7 +111,7 @@ def user_detail(id):
 
             # Update role
             if 'role' in data:
-                if data['role'] not in ['mahasiswa', 'admin', 'dekan', 'wakil_dekan']:
+                if data['role'] not in ['mahasiswa', 'admin', 'dekan', 'wakil_dekan', 'wakil_dekan1']:
                     return jsonify({'error': 'Role tidak valid'}), 400
                 user.role = data['role']
 

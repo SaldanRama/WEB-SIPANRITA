@@ -5,6 +5,7 @@ load_dotenv()
 
 class Config:
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:@localhost/db_pentas'
+    SECRET_KEY = 'dev-key-rahasia'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
@@ -12,7 +13,6 @@ class Config:
     MAIL_PASSWORD = 'dvrt ksws encv xnew'
     MAIL_USE_TLS = True
     MAIL_DEFAULT_SENDER = 'mailpentas24@gmail.com'
-    SECRET_KEY = 'dev-key-rahasia'
     
     # Konfigurasi upload
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
