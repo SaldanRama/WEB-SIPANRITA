@@ -70,7 +70,7 @@ export const NavbarComponents = () => {
         <div className="container">
             <a className="navbar-brand fw-bold d-flex align-items-center" href="#">
             <img src="public/logoUnhas.png" alt="." width="25" className="me-2" />
-            <span className="my-auto">PENTAS</span>
+            <span className="my-auto">SIPANRITA</span>
             </a>
             <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span className="navbar-toggler-icon"></span>

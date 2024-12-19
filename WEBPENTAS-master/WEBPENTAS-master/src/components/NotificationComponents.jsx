@@ -14,7 +14,7 @@ const NotificationComponents = () => {
   const [currentPagePeminjaman, setCurrentPagePeminjaman] = useState(1);
   const [currentPagePerizinan, setCurrentPagePerizinan] = useState(1);
 
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 5;
 
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const userEmail = localStorage.getItem('userEmail');

@@ -75,8 +75,8 @@ export const Login = () => {
   return (
     <div className="login-container">
       <div className="login-left">
-        <h1 className="fw-bold">WELCOME TO PENTAS</h1>
-        <p>WEBSITE PEMINJAMAN FASILITAS FMIPA UNHAS</p>
+        <h1 className="fw-bold">WELCOME TO SIPANRITA</h1>
+        <p>SISTEM PENGELOLAAN REKOMENDASI KEGIATAN DAN PEMINJAMAN FASILITAS</p>
       </div>
 
       <div className="login-right">

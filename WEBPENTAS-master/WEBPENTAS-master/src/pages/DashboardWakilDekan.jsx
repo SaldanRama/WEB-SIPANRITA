@@ -101,7 +101,7 @@ function BerandaWadek() {
       const data = await response.json();
       
       const counts = data.reduce((acc, curr) => {
-        acc[curr.status] = (acc[curr.status] || 0) + 1;
+        acc[curr.status_disposisi] = (acc[curr.status_disposisi] || 0) + 1;
         return acc;
       }, {});
 
@@ -152,7 +152,7 @@ function BerandaWadek() {
             <FaCheckCircle />
           </div>
           <div className="stat-info">
-            <h3>Disposisi Disetujui</h3>
+            <h3>Peminjaman Disetujui</h3>
             <div className="value">{stats.disetujui}</div>
           </div>
         </div>
@@ -162,7 +162,7 @@ function BerandaWadek() {
             <FaTimesCircle />
           </div>
           <div className="stat-info">
-            <h3>Disposisi Ditolak</h3>
+            <h3>Peminjaman Ditolak</h3>
             <div className="value">{stats.ditolak}</div>
           </div>
         </div>

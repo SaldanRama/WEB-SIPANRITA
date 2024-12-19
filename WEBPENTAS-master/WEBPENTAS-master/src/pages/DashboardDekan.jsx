@@ -128,11 +128,18 @@ function BerandaDekan() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [disposisi, setDisposisi] = useState([]);
+  const [izinStats, setIzinStats] = useState({
+    pending: 0,
+    disetujui: 0,
+    ditolak: 0,
+    disposisi: 0,
+  });
 
   useEffect(() => {
     fetchStats();
     fetchNotifications();
     fetchDisposisi();
+    fetchIzinKegiatan();
   }, []);
 
   const fetchStats = async () => {
@@ -222,6 +229,24 @@ function BerandaDekan() {
     }
   };
 
+  const fetchIzinKegiatan = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/izin-kegiatan");
+      const data = await response.json();
+
+      const stats = {
+        pending: data.filter((izin) => izin.status === "pending").length,
+        disetujui: data.filter((izin) => izin.status === "disetujui").length,
+        ditolak: data.filter((izin) => izin.status === "ditolak").length,
+        disposisi: data.filter((izin) => izin.status === "disposisi").length,
+      };
+
+      setIzinStats(stats);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending":
@@ -283,6 +308,48 @@ function BerandaDekan() {
           <div className="stat-info">
             <h3>Peminjaman Didisposisi</h3>
             <div className="value">{stats.disposisi}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon pending">
+            <FaClipboardList />
+          </div>
+          <div className="stat-info">
+            <h3>Izin Kegiatan Pending</h3>
+            <div className="value">{izinStats.pending}</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon approved">
+            <FaCheckCircle />
+          </div>
+          <div className="stat-info">
+            <h3>Izin Kegiatan Disetujui</h3>
+            <div className="value">{izinStats.disetujui}</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon rejected">
+            <FaTimesCircle />
+          </div>
+          <div className="stat-info">
+            <h3>Izin Kegiatan Ditolak</h3>
+            <div className="value">{izinStats.ditolak}</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon disposisi">
+            <FaExchangeAlt />
+          </div>
+          <div className="stat-info">
+            <h3>Izin Kegiatan Didisposisi</h3>
+            <div className="value">{izinStats.disposisi}</div>
           </div>
         </div>
       </div>
@@ -408,7 +475,7 @@ function DaftarPeminjaman() {
             const waktuSelesai = new Date(
               `${item.tanggal_selesai}T${item.waktu_selesai}`
             );
-            
+
             // Periksa apakah waktu selesai sudah terlewati
             const currentDate = new Date();
             if (waktuSelesai < currentDate) {
@@ -421,7 +488,6 @@ function DaftarPeminjaman() {
           return item; // Kembalikan item yang statusnya tidak perlu diubah
         })
       );
-
 
       // Filter data berdasarkan filter.status, filter.tanggal, dan filter.keyword
       const filteredPeminjaman = updatedPeminjaman
@@ -527,7 +593,6 @@ function DaftarPeminjaman() {
   return (
     <div className="dashboard-content">
       <h1 className="dashboard-title">Daftar Peminjaman</h1>
-
       <div className="filter-container mb-4">
         <div className="filter-group">
           <select
@@ -626,26 +691,6 @@ function DaftarPeminjaman() {
                         Detail
                       </button>
                     </div>
-                    {item.status === "pending" && (
-                      <>
-                        <button
-                          className="btn btn-success btn-sm me-2"
-                          onClick={() =>
-                            handleStatusUpdate(item.id, "disetujui")
-                          }
-                        >
-                          Setujui
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          data-bs-toggle="modal"
-                          data-bs-target="#rejectModal"
-                          onClick={() => openRejectModal(item.id)}
-                        >
-                          Tolak
-                        </button>
-                      </>
-                    )}
                   </td>
                 </tr>
               ))}
@@ -738,6 +783,8 @@ function DetailPeminjaman() {
   const navigate = useNavigate();
   const [peminjaman, setPeminjaman] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [komentar, setKomentar] = useState(""); // Untuk komentar penolakan
+  const [toastMessage, setToastMessage] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -759,6 +806,58 @@ function DetailPeminjaman() {
 
     fetchData();
   }, [id]);
+
+  // Fungsi untuk mengubah status peminjaman
+  const handleStatusUpdate = async (newStatus, komentar = "") => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/peminjaman/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus, komentar }),
+        }
+      );
+
+      if (response.ok) {
+        setToastMessage(
+          `Peminjaman berhasil ${
+            newStatus === "disetujui" ? "disetujui" : "ditolak"
+          }`
+        );
+        // Refresh data peminjaman
+        const updatedResponse = await fetch(
+          `http://localhost:5000/peminjaman/${id}`
+        );
+        const updatedData = await updatedResponse.json();
+        setPeminjaman(updatedData);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setToastMessage("Gagal memperbarui status peminjaman");
+    }
+  };
+
+  // Fungsi untuk menolak peminjaman
+  const handleReject = async () => {
+    if (!komentar.trim()) {
+      alert("Harap isi alasan penolakan.");
+      return;
+    }
+
+    await handleStatusUpdate("ditolak", komentar);
+
+    // Tutup modal Bootstrap secara manual
+    const modalElement = document.getElementById("rejectModal");
+    const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+
+    setKomentar(""); // Reset komentar
+  };
 
   const handleDisposisi = async () => {
     try {
@@ -800,6 +899,17 @@ function DetailPeminjaman() {
       alert("Gagal mendisposisikan peminjaman");
     }
   };
+
+  // Auto-hide toast setelah 5 detik
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null); // Menghilangkan toast setelah 5 detik
+      }, 5000);
+
+      return () => clearTimeout(timer); // Bersihkan timer saat component di-unmount atau toastMessage berubah
+    }
+  }, [toastMessage]);
 
   if (loading) {
     return <div>Memuat data...</div>;
@@ -928,8 +1038,25 @@ function DetailPeminjaman() {
           <i className="fas fa-arrow-left"></i>
           Kembali
         </button>
-        {peminjaman.status === "pending" && (
+
+        {/* Tambahkan tombol Setujui dan Tolak jika status pending */}
+        {peminjaman?.status === "pending" && (
           <>
+            <button
+              className="btn-reject"
+              data-bs-toggle="modal"
+              data-bs-target="#rejectModal"
+            >
+              <i className="fas fa-times"></i>
+              Tolak Peminjaman
+            </button>
+            <button
+              onClick={() => handleStatusUpdate("disetujui")}
+              className="btn-approve"
+            >
+              <i className="fas fa-check"></i>
+              Setujui Peminjaman
+            </button>
             <button onClick={handleDisposisi} className="btn-disposisi">
               <i className="fas fa-exchange-alt"></i>
               Disposisi ke Wakil Dekan
@@ -937,6 +1064,81 @@ function DetailPeminjaman() {
           </>
         )}
       </div>
+
+      {/* Modal Tolak */}
+      <div
+        className="modal fade"
+        id="rejectModal"
+        tabIndex="-1"
+        aria-labelledby="rejectModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="rejectModalLabel">
+                Alasan Penolakan
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <textarea
+                className="form-control"
+                placeholder="Masukkan alasan penolakan..."
+                value={komentar}
+                onChange={(e) => setKomentar(e.target.value)}
+              ></textarea>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+                onClick={() => setKomentar("")}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleReject}
+              >
+                Tolak
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className="position-fixed top-0 end-0 p-3"
+          style={{ zIndex: 1050 }}
+        >
+          <div
+            className="toast show"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
+            <div className="toast-header">
+              <strong className="me-auto">Notifikasi</strong>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setToastMessage(null)}
+              ></button>
+            </div>
+            <div className="toast-body">{toastMessage}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1537,70 +1739,140 @@ function DaftarPerizinan() {
   const navigate = useNavigate();
   const [perizinan, setPerizinan] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('pending'); // Default status filter adalah 'pending'
-  const [toastMessage, setToastMessage] = useState(null);
+  const [filter, setFilter] = useState({
+    status: "semua",  // Set default filter status ke "semua"
+    tanggal: "",
+    keyword: "",
+  });
+  const [rejectComment, setRejectComment] = useState("");
+  const [selectedPeminjamanId, setSelectedPeminjamanId] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null); // State untuk pesan toast
 
   useEffect(() => {
     fetchPerizinan();
-  }, [filterStatus]); // Memanggil ulang fetchPerizinan saat filterStatus berubah
+  }, [filter]);
 
   const fetchPerizinan = async () => {
     try {
       setLoading(true);
       const response = await fetch("http://localhost:5000/izin-kegiatan");
-      if (!response.ok) {
-        throw new Error(`HTTP Error ${response.status}`);
-      }
       const data = await response.json();
 
-      // Filter berdasarkan status yang dipilih
-      const filteredData = data.filter((item) => item.status === filterStatus);
+      // Filter data berdasarkan filter.status, filter.tanggal, dan filter.keyword
+      const filteredPerizinan = data.filter((item) => {
+        const statusMatch =
+          filter.status === "semua" || item.status === filter.status;
+        const tanggalMatch = filter.tanggal
+          ? new Date(item.tanggal).toDateString() ===
+            new Date(filter.tanggal).toDateString()
+          : true;
+        const keywordMatch = filter.keyword
+          ? item.nama_kegiatan
+              .toLowerCase()
+              .includes(filter.keyword.toLowerCase()) ||
+            item.nama_organisasi
+              .toLowerCase()
+              .includes(filter.keyword.toLowerCase())
+          : true;
 
-      setPerizinan(filteredData);
+        return statusMatch && tanggalMatch && keywordMatch;
+      });
+
+      setPerizinan(filteredPerizinan);
     } catch (error) {
-      console.error("Error fetching izin-kegiatan:", error);
-      setToastMessage("Terjadi kesalahan saat memuat data perizinan.");
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStatusUpdate = async (id, newStatus, komentar = "") => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/peminjaman/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus, komentar }),
+        }
+      );
+
+      if (response.ok) {
+        console.log(`Status peminjaman ${id} diperbarui menjadi ${newStatus}`);
+        setToastMessage("Peminjaman Disetujui");
+        fetchPerizinan();
+      } else {
+        console.error("Gagal memperbarui status:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+
+  const openRejectModal = (id) => {
+    setSelectedPeminjamanId(id);
+  };
+
+  const closeRejectModal = () => {
+    setRejectComment("");
+    setSelectedPeminjamanId(null);
+  };
+
+  const handleReject = async () => {
+    if (!rejectComment.trim()) {
+      alert("Harap isi alasan penolakan.");
+      return;
+    }
+
+    await handleStatusUpdate(selectedPeminjamanId, "ditolak", rejectComment);
+
+    // Tampilkan notifikasi
+    setToastMessage("Peminjaman Ditolak");
+
+    // Tutup modal dan reset nilai
+    closeRejectModal();
   };
 
   // Auto-hide toast after 5 seconds
   useEffect(() => {
     if (toastMessage) {
       const timer = setTimeout(() => {
-        setToastMessage(null);
+        setToastMessage(null); // Hide toast after 5 seconds
       }, 5000);
 
+      // Clear the timeout if the component is unmounted or toastMessage changes
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
 
   return (
-    <div className="container">
-      <h1 className="my-4 text-center">Daftar Perizinan</h1>
+    <div className="dashboard-content">
+      <h1 className="dashboard-title">Daftar Perizinan</h1>
 
-      {/* Filter Dropdown */}
-      <div className="mb-4">
-        <label htmlFor="status-filter" className="form-label">Filter Status</label>
-        <select
-          id="status-filter"
-          className="form-select"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)} // Update filter status
-        >
-          <option value="pending">Pending</option>
-          <option value="disetujui">Disetujui</option>
-          <option value="ditolak">Ditolak</option>
-        </select>
+      <div className="filter-container mb-4">
+        <div className="filter-group">
+          <select
+            value={filter.status}
+            onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+            className="form-select"
+          >
+            <option value="semua">Semua Status</option>
+            <option value="pending">Pending</option>
+            <option value="disetujui">Disetujui</option>
+            <option value="ditolak">Ditolak</option>
+            <option value="disposisi">Disposisi</option>
+          </select>
+        </div>
       </div>
 
-      {/* Loading Spinner */}
       {loading ? (
-        <div className="d-flex justify-content-center">
+        <div className="text-center">
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
+          <p>Memuat data perizinan...</p>
         </div>
       ) : (
         <div className="table-container">
@@ -1617,7 +1889,11 @@ function DaftarPerizinan() {
             <tbody>
               {perizinan.length > 0 ? (
                 perizinan
-                  .sort((a, b) => new Date(b.tanggal_permintaan) - new Date(a.tanggal_permintaan)) // Urutkan berdasarkan tanggal permintaan
+                  .sort(
+                    (a, b) =>
+                      new Date(b.tanggal_permintaan) -
+                      new Date(a.tanggal_permintaan)
+                  ) // Urutkan berdasarkan tanggal permintaan
                   .map((item) => (
                     <tr key={item.id}>
                       <td>{item.nama_organisasi}</td>
@@ -1626,7 +1902,11 @@ function DaftarPerizinan() {
                       <td>
                         <span
                           className={`badge bg-${
-                            item.status === "disetujui" ? "success" : item.status === "ditolak" ? "danger" : "warning"
+                            item.status === "disetujui"
+                              ? "success"
+                              : item.status === "ditolak"
+                              ? "danger"
+                              : "warning"
                           }`}
                         >
                           {item.status}
@@ -1637,7 +1917,9 @@ function DaftarPerizinan() {
                           <button
                             className="btn btn-primary btn-sm"
                             onClick={() =>
-                              navigate(`/dashboard-dekan/izin-kegiatan/${item.id}`)
+                              navigate(
+                                `/dashboard-dekan/izin-kegiatan/${item.id}`
+                              )
                             }
                           >
                             <i className="fas fa-eye"></i> Detail
@@ -1648,13 +1930,65 @@ function DaftarPerizinan() {
                   ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center">Tidak ada perizinan untuk status ini</td>
+                  <td colSpan="5" className="text-center">
+                    Tidak ada perizinan untuk status ini
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       )}
+
+      {/* Modal Tolak */}
+      <div
+        className="modal fade"
+        id="rejectModal"
+        tabIndex="-1"
+        aria-labelledby="rejectModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="rejectModalLabel">
+                Alasan Penolakan
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <textarea
+                className="form-control"
+                placeholder="Masukkan alasan penolakan..."
+                value={rejectComment}
+                onChange={(e) => setRejectComment(e.target.value)}
+              ></textarea>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+                onClick={closeRejectModal}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleReject}
+              >
+                Tolak
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -1685,7 +2019,6 @@ function DaftarPerizinan() {
   );
 }
 
-
 function DetailPerizinan() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1707,7 +2040,7 @@ function DetailPerizinan() {
       const data = await response.json();
       setPerizinan(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -1716,20 +2049,23 @@ function DetailPerizinan() {
   // Fungsi untuk mengubah status perizinan menjadi disetujui
   const handleApprove = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/izin-kegiatan/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "disetujui",
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:5000/izin-kegiatan/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "disetujui",
+          }),
+        }
+      );
 
       if (response.ok) {
         setToastMessage("Perizinan berhasil disetujui");
         await fetchDetailDisposisi();
-      } 
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -1743,27 +2079,30 @@ function DetailPerizinan() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/izin-kegiatan/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "ditolak",
-          komentar: komentar,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:5000/izin-kegiatan/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "ditolak",
+            komentar: komentar,
+          }),
+        }
+      );
 
       if (response.ok) {
-        setToastMessage('Perizinan berhasil ditolak');
-  
+        setToastMessage("Perizinan berhasil ditolak");
+
         // Tutup modal Bootstrap secara manual
-        const modalElement = document.getElementById('rejectModal');
+        const modalElement = document.getElementById("rejectModal");
         const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) {
           modalInstance.hide();
         }
-  
+
         // Tunggu sedikit untuk memastikan modal tertutup
         setTimeout(() => {
           window.location.reload(); // Refresh halaman
@@ -1780,17 +2119,20 @@ function DetailPerizinan() {
   const handleDisposisi = async () => {
     try {
       // Buat disposisi
-      const disposisiResponse = await fetch(`http://localhost:5000/disposisi-kegiatan`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_izin_kegiatan: id,
-          dari: "dekan",
-          kepada: "wakil_dekan1", // Ganti kepada 'wakil_dekan1'
-        }),
-      });
+      const disposisiResponse = await fetch(
+        `http://localhost:5000/disposisi-kegiatan`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_izin_kegiatan: id,
+            dari: "dekan",
+            kepada: "wakil_dekan1", // Ganti kepada 'wakil_dekan1'
+          }),
+        }
+      );
 
       if (disposisiResponse.ok) {
         // Update status perizinan menjadi 'disposisi'
@@ -2033,6 +2375,3 @@ function DetailPerizinan() {
     </div>
   );
 }
-
-
-

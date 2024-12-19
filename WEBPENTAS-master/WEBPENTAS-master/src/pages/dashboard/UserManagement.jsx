@@ -192,7 +192,8 @@ function UserManagement() {
                   <option value="mahasiswa">Mahasiswa</option>
                   <option value="admin">Admin</option>
                   <option value="dekan">Dekan</option>
-                  <option value="wakil_dekan">Wakil Dekan</option>
+                  <option value="wakil_dekan">Wakil Dekan 2</option>
+                  <option value="wakil_dekan1">Wakil Dekan 1</option>
                 </select>
               </div>
               <div className="custom-modal-footer">

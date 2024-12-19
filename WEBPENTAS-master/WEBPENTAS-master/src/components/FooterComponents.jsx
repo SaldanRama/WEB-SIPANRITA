@@ -56,7 +56,7 @@ export const FooterComponents = () => {
             <div className="col-12 px-5 text-white">
               <hr className="mb-3" style={{backgroundColor: "white", opacity: "0.2"}} />
               <div className="d-flex justify-content-between align-items-center">
-                <p style={{fontSize: "14px", marginBottom: "0"}}>© 2024 WEBPENTAS. All rights reserved.</p>
+                <p style={{fontSize: "14px", marginBottom: "0"}}>© 2024 WEBSIPANRITA. All rights reserved.</p>
 
                 <div className="d-flex gap-3">
                   <a href="https://www.instagram.com/fmipa.uh/" className="text-white" target="_blank" rel="noopener noreferrer">
