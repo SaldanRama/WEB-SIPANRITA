@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 # WEB-PENTAS
+=======
+# WEB-SIPANRITA
+>>>>>>> 7982ff3d23f9ba8060941286c1c931135f905977
